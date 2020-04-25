@@ -1,0 +1,119 @@
+%{
+int line = 1;
+char value[200];
+int i,j;
+%}
+%x comment
+
+%%
+
+"//" BEGIN(comment);
+
+<comment>. printf("");
+
+<comment>"\n" { BEGIN(INITIAL);
+line++; }
+
+"\n" line++;
+
+int 	   printf("%d tINT\n",line);
+real 	   printf("%d tREAL\n",line);
+if   	   printf("%d tIF\n",line);
+endif	   printf("%d tENDIF\n",line);
+vector     printf("%d tVECTOR\n",line);
+matrix     printf("%d tMATRIX\n",line);
+transpose  printf("%d tTRANSPOSE\n",line);
+
+
+","  printf("%d tCOMMA\n",line);
+"("  printf("%d tLPAR\n",line);
+"="  printf("%d tASSIGNM\n",line);
+"+"  printf("%d tPLUS\n",line);
+"*"  printf("%d tSTAR\n",line);
+"==" printf("%d tEQUL\n",line);
+"<"  printf("%d tLT\n",line);
+">"  printf("%d tGT\n",line);
+"["  printf("%d tLBRAC\n",line);
+"]"  printf("%d tRBRAC\n",line);
+"&&" printf("%d tAND\n",line);
+".*" printf("%d tDOTPROD\n",line);
+")"  printf("%d tRPAR\n",line);
+"-"  printf("%d tMINUS\n",line);
+"/"  printf("%d tDIV\n",line);
+";"  printf("%d tSEMI\n",line);
+"!=" printf("%d tINEQ\n",line);
+"<=" printf("%d tLE\n",line);
+">=" printf("%d tGE\n",line);
+"||" printf("%d tOR\n",line);
+
+[A-Za-z_][A-Za-z0-9_]* printf("%d tIDENT (%s)\n",line,yytext);
+
+([0-9]+E-[0-9]+) |
+(-[0-9]+E-[0-9]+) |
+(-[0-9]+"."[0-9]+E-?[0-9]+) |
+([0-9]+"."[0-9]+E-?[0-9]+) |
+([0-9]+"."[0-9]+) |
+(-[0-9]+"."[0-9]+) { //C code the calculate the real value of lexeme
+            for(i=0;i<sizeof(value);i++) {value[i] = '\0';}
+            int beDeleted = 1, isEexist = 0;
+            for(i=0,j=0;i<yyleng;i++){
+                if((beDeleted == 0) || (yytext[i] !='0')){
+                    value[j] = yytext[i];
+                    if(yytext[i] == 'E') { beDeleted = 1; isEexist=1;
+			while(value[j-1] == '0') {value[j] = '\0'; j--; }
+		    value[j] = 'E';
+                    } 
+		    else if (yytext[i] != '-' ){ beDeleted = 0;}
+                    else { beDeleted = 1;}
+                j++;}else if(yytext[i+1] == '.') {value[j] = yytext[i]; j++;}
+            }if(isEexist == 0){
+		for(i=j-1;i>=0;i--) {
+		   if(value[i] == '0') {value[i] = '\0';}
+		   else {break;}
+		}
+             }   REJECT;
+}
+
+([0-9]+E-[0-9]+) |
+([0-9]+"."[0-9]+) |
+([0-9]+"."[0-9]+E-?[0-9]+) { 
+        printf("%d tPOSREAL (%s) (%s)\n",line,yytext,value);
+}
+
+(-[0-9]+E-[0-9]+) |
+(-[0-9]+"."[0-9]+) |
+(-[0-9]+"."[0-9]+E-?[0-9]+) { 
+        printf("%d tNEGREAL (%s) (%s)\n",line,yytext,value);
+}
+
+([0-9]+E[0-9]+) |
+([0-9]+) |
+(-[0-9]+E[0-9]+) |
+(-[0-9]+) { //C code to calculate the integer value of lexeme
+            for(i=0;i<sizeof(value);i++) {value[i] = '\0';}
+            int beDeleted = 1;
+            for(i=0,j=0;i<yyleng;i++){
+                if((beDeleted == 0) || (yytext[i] !='0')){
+                    value[j] = yytext[i];
+                    if(yytext[i] != 'E' && yytext[i] != '-' ){ beDeleted = 0;}
+                    else { beDeleted = 1;}
+                j++;}
+            }  REJECT;
+}
+
+([0-9]+E[0-9]+) |
+([0-9]+) { printf("%d tPOSINT (%s) (%s)\n",line,yytext,value);
+}
+
+(-[0-9]+E[0-9]+) |
+(-[0-9]+) { printf("%d tNEGINT (%s) (%s)\n",line,yytext,value);
+}
+
+. printf("");
+%%
+
+int main()
+{
+    yylex();
+    return 0;
+}

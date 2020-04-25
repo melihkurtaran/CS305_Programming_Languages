@@ -1,0 +1,57 @@
+%{
+/* get the token definitions from bison output file */
+#include "melihkurtaran-hw3.tab.h"
+int line = 1;
+%}
+%x comment
+
+%%
+
+"//" BEGIN(comment);
+
+<comment>. 
+
+<comment>"\n" { BEGIN(INITIAL);
+line++; }
+
+"\n" line++;
+
+if              return tIF;
+endif           return tENDIF;
+int             return tINTTYPE;
+int" "vector    return tINTVECTORTYPE;
+int" "matrix    return tINTMATRIXTYPE;
+real            return tREALTYPE;
+real" "vector   return tREALVECTORTYPE;
+real" "matrix   return tREALMATRIXTYPE;
+transpose	return tTRANSPOSE;
+
+-?[0-9]+"."[0-9]+(E-?[0-9]+)? {
+        return tREALNUM;
+}
+
+-?[0-9]+(E[0-9]+)? {
+        return tINTNUM;
+}
+
+"&&" return tAND;
+"||" return tOR;
+">"  return tGT;
+"<"  return tLT;
+">=" return tGTE;
+"<=" return tLTE;
+"!=" return tNE;
+"==" return tEQ;
+".*" return tDOTPROD;
+
+[A-Za-z_][A-Za-z0-9_]* return tIDENT;
+
+[ \t]+ /* eat up white space */
+
+
+. { /* pass any other character to the parser */
+  return yytext[0];
+}
+
+%%
+

@@ -1,0 +1,51 @@
+%{
+/* get the token definitions from bison output file */
+#include "melihkurtaran-ex1.tab.h"
+int line = 1;
+int identLine = 1;
+%}
+
+%%
+
+"\n" line++;
+
+int             return tINT;
+string		return tSTRING;
+return		return tRETURN;
+print		return tPRINT;
+
+"(" return tLPAR;
+")" return tRPAR;
+"," return tCOMMA;
+"%" return tMOD;
+"=" return tASSIGNM;
+"-" return tMINUS;
+"+" return tPLUS;
+"/" return tDIV;
+"*" return tSTAR;
+";" return tSEMI;
+"{" return tLBRAC;
+"}" return tRBRAC;
+
+
+[0-9]+ {
+        return tPOSINTVAL;
+}
+
+-[0-9]+ {
+        return tNEGINTVAL;
+}
+
+[A-Za-z_][A-Za-z0-9_]* { identLine = line; sscanf(yytext,"%s",yylval.name);  return tIDENT;}
+
+\".*\" return tSTRINGVAL;
+
+[ \t]+ /* eat up white space */
+
+
+. { /* pass any other character to the parser */
+  return yytext[0];
+}
+
+%%
+
